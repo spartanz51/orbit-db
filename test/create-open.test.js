@@ -350,6 +350,15 @@ Object.keys(testAPIs).forEach(API => {
         assert.strictEqual(db._cache._store._db.status, 'closed')
       })
 
+      it.only("close load close sets status to 'closed'", async () => {
+        const directory = path.join(dbPath, "custom-store")
+        db = await orbitdb.open('xyz', { create: true, type: 'feed', directory })
+        await db.close()
+        await db.load()
+        await db.close()
+        assert.strictEqual(db._cache._store._db.status, 'closed')
+      })
+
       it('successfully manages multiple caches', async() => {
         // Cleaning up cruft from other tests
         const directory = path.join(dbPath, "custom-store")
