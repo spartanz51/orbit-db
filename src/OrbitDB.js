@@ -289,11 +289,15 @@ class OrbitDB {
   }
 
   async _onDrop (db) {
-    await db._cache.open()
+    const address = db.address.toString()
+    const dir = db && db.options.directory ? db.options.directory : this.directory
+    await this._requestCache(address, dir, db._cache)
   }
 
   async _onLoad (db) {
-    await db._cache.open()
+    const address = db.address.toString()
+    const dir = db && db.options.directory ? db.options.directory : this.directory
+    await this._requestCache(address, dir, db._cache)
   }
 
   async _determineAddress (name, type, options = {}) {
@@ -328,7 +332,7 @@ class OrbitDB {
     // Create the database address
     const dbAddress = await this._determineAddress(name, type, options)
 
-    options.cache = await this._requestCache(dbAddress.toString(), options)
+    options.cache = await this._requestCache(dbAddress.toString(), options.directory)
 
     // Check if we have the database locally
     const haveDB = await this._haveLocalData(options.cache, dbAddress)
@@ -351,10 +355,10 @@ class OrbitDB {
     return this._determineAddress(name, type, opts)
   }
 
-  async _requestCache (address, options) {
-    const dir = options.directory || this.directory
+  async _requestCache (address, directory, existingCache) {
+    const dir = directory || this.directory
     if (!this.caches[dir]) {
-      const newCache = await this._createCache(dir)
+      const newCache = existingCache || await this._createCache(dir)
       this.caches[dir] = { cache: newCache, handlers: new Set() }
     }
     this.caches[dir].handlers.add(address)
@@ -397,7 +401,7 @@ class OrbitDB {
     // Parse the database address
     const dbAddress = OrbitDBAddress.parse(address)
 
-    options.cache = await this._requestCache(dbAddress.toString(), options)
+    options.cache = await this._requestCache(dbAddress.toString(), options.directory)
 
     // Check if we have the database
     const haveDB = await this._haveLocalData(options.cache, dbAddress)
